@@ -43,6 +43,7 @@
 #include "libavutil/video_enc_params.h"
 #include "libavutil/detection_bbox.h"
 #include "libavutil/uuid.h"
+#include "libavutil/time.h"
 
 #include "avfilter.h"
 #include "internal.h"
@@ -51,6 +52,7 @@
 typedef struct ShowInfoContext {
     const AVClass *class;
     int calculate_checksums;
+    int print_wallclock;
 } ShowInfoContext;
 
 #define OFFSET(x) offsetof(ShowInfoContext, x)
@@ -58,6 +60,7 @@ typedef struct ShowInfoContext {
 
 static const AVOption showinfo_options[] = {
     { "checksum", "calculate checksums", OFFSET(calculate_checksums), AV_OPT_TYPE_BOOL, {.i64=1}, 0, 1, VF },
+    { "wallclock", "print wallclock", OFFSET(print_wallclock), AV_OPT_TYPE_BOOL, {.i64=0}, 0, 1, VF },
     { NULL }
 };
 
@@ -737,6 +740,14 @@ static int filter_frame(AVFilterLink *inlink, AVFrame *frame)
                    sqrt((sum2[plane] - sum[plane]*(double)sum[plane]/pixelcount[plane])/pixelcount[plane]));
         av_log(ctx, AV_LOG_INFO, "\b]");
     }
+
+    if (s->print_wallclock) {
+        av_log(ctx, AV_LOG_INFO,
+               " wallclock:%"PRId64" ",
+               av_gettime()
+        );
+    }
+
     av_log(ctx, AV_LOG_INFO, "\n");
 
     for (i = 0; i < frame->nb_side_data; i++) {
